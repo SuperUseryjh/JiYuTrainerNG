@@ -21,7 +21,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --ignore-scripts
 
       # ------------------------------------------------------------------
       # 1) 编译 32 位注入 DLL (jiyu_inject.dll)
@@ -50,15 +50,19 @@ jobs:
 
       # ------------------------------------------------------------------
       # 2) 编译 native addon (jiyu_native.node)，针对 Electron ABI
-      #    直接读取 node_modules/electron 的版本，用 node-gyp 指向
-      #    Electron headers 重新编译，保证 ABI 与 Electron 主进程匹配。
+      #    关键：先用 vcvarsall x64 设置 VCINSTALLDIR，node-gyp 检测到
+      #    VCINSTALLDIR 后会跳过 VS 查找（否则旧版 node-gyp 不识别 VS 18）。
       # ------------------------------------------------------------------
       - name: Build native addon (Electron ABI)
-        shell: pwsh
+        shell: cmd
         run: |
-          $electronVersion = (Get-Content node_modules\electron\package.json | ConvertFrom-Json).version
-          Write-Host "Electron version: $electronVersion"
-          npx node-gyp rebuild --target=$electronVersion --arch=x64 --dist-url=https://electronjs.org/headers
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -find VC\Auxiliary\Build\vcvarsall.bat`) do set "VCVARS=%%i"
+          call "%VCVARS%" x64
+          node -p "require('electron/package.json').version" > "%TEMP%\electron_ver.txt"
+          set /p ELECTRON_VERSION=<"%TEMP%\electron_ver.txt"
+          echo Electron version: %ELECTRON_VERSION%
+          npx node-gyp rebuild --target=%ELECTRON_VERSION% --arch=x64 --dist-url=https://electronjs.org/headers
+          if errorlevel 1 exit /b 1
 
       - name: Verify artifacts
         shell: pwsh

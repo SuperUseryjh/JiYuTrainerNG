@@ -4,13 +4,13 @@
   "description": "JiYuTrainer 重写魔改版 - 适配极域课堂管理系统 v6.0 2021 豪华版",
   "author": "JiYuTrainerNG",
   "main": "electron/main.js",
+  "gypfile": false,
   "scripts": {
     "build:native": "node-gyp rebuild",
     "start": "electron .",
     "dist": "electron-builder --win"
   },
   "devDependencies": {
-    "@electron/rebuild": "^3.6.0",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
     "node-addon-api": "^7.1.0",
@@ -19,6 +19,7 @@
   "build": {
     "appId": "com.jiyu.trainer.ng",
     "productName": "JiYuTrainerNG",
+    "npmRebuild": false,
     "directories": {
       "output": "dist"
     },
