@@ -1,0 +1,100 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      # ------------------------------------------------------------------
+      # 1) 编译 32 位注入 DLL (jiyu_inject.dll)
+      #    注入目标 StudentMain.exe 是 x86，因此注入 DLL 必须 32 位。
+      #    用 vswhere 定位 vcvarsall.bat，再切到 x86 工具链编译。
+      # ------------------------------------------------------------------
+      - name: Build inject DLL (x86)
+        shell: cmd
+        run: |
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -find VC\Auxiliary\Build\vcvarsall.bat`) do set "VCVARS=%%i"
+          if not defined VCVARS (
+            echo [ERROR] vcvarsall.bat not found
+            exit /b 1
+          )
+          call "%VCVARS%" x86
+          if not exist build mkdir build
+          cl /nologo /LD /MT /O2 /EHsc /utf-8 /DUNICODE /D_UNICODE ^
+             inject_dll\dllmain.cpp ^
+             native\monitor.cpp ^
+             native\unlock.cpp ^
+             native\jiyu_common.cpp ^
+             /I native ^
+             /link /OUT:build\jiyu_inject.dll ^
+             advapi32.lib user32.lib
+          if errorlevel 1 exit /b 1
+
+      # ------------------------------------------------------------------
+      # 2) 编译 native addon (jiyu_native.node)，针对 Electron ABI
+      #    直接读取 node_modules/electron 的版本，用 node-gyp 指向
+      #    Electron headers 重新编译，保证 ABI 与 Electron 主进程匹配。
+      # ------------------------------------------------------------------
+      - name: Build native addon (Electron ABI)
+        shell: pwsh
+        run: |
+          $electronVersion = (Get-Content node_modules\electron\package.json | ConvertFrom-Json).version
+          Write-Host "Electron version: $electronVersion"
+          npx node-gyp rebuild --target=$electronVersion --arch=x64 --dist-url=https://electronjs.org/headers
+
+      - name: Verify artifacts
+        shell: pwsh
+        run: |
+          if (-not (Test-Path build\Release\jiyu_native.node)) { Write-Error "jiyu_native.node missing"; exit 1 }
+          if (-not (Test-Path build\jiyu_inject.dll)) { Write-Error "jiyu_inject.dll missing"; exit 1 }
+          Get-Item build\Release\jiyu_native.node, build\jiyu_inject.dll | Select-Object Name, Length
+
+      # ------------------------------------------------------------------
+      # 3) 打包 Electron 应用（electron-builder）
+      #    package.json 的 build.extraResources 会把两个编译产物
+      #    复制到应用的 resources 目录，preload.js 从那里加载。
+      # ------------------------------------------------------------------
+      - name: Package with electron-builder
+        run: npx electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ------------------------------------------------------------------
+      # 4) 上传打包产物（portable exe + nsis 安装包）
+      # ------------------------------------------------------------------
+      - name: Upload packaged app
+        uses: actions/upload-artifact@v4
+        with:
+          name: jiyu-trainer-ng-windows
+          path: dist/*.exe
+          if-no-files-found: error
+
+      # ------------------------------------------------------------------
+      # 5) 上传编译产物（.node / .dll，方便调试）
+      # ------------------------------------------------------------------
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jiyu-native-windows
+          path: |
+            build/Release/jiyu_native.node
+            build/jiyu_inject.dll
+          if-no-files-found: error

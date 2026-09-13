@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'" />
+  <title>JiYuTrainer NG</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+    body { margin: 0; padding: 16px; background: #1e1e2e; color: #cdd6f4; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    .card { background: #313244; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+    .card h2 { font-size: 14px; margin: 0 0 10px; color: #89b4fa; }
+    .row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+    label { font-size: 12px; color: #a6adc8; min-width: 60px; }
+    input { flex: 1; min-width: 120px; padding: 6px 8px; background: #1e1e2e; border: 1px solid #45475a; border-radius: 4px; color: #cdd6f4; }
+    button { padding: 7px 14px; background: #89b4fa; color: #1e1e2e; border: 0; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #b4befe; }
+    button.danger { background: #f38ba8; }
+    #log { background: #11111b; border-radius: 6px; padding: 10px; height: 160px; overflow-y: auto; font-size: 12px; font-family: Consolas, monospace; white-space: pre-wrap; }
+    .muted { color: #a6adc8; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <h1>JiYuTrainer NG — 极域 2021 豪华版适配</h1>
+
+  <div class="card">
+    <h2>本地解锁</h2>
+    <div class="row">
+      <button id="btnUnlock">解锁键盘/鼠标 (DCS)</button>
+      <button id="btnInject">注入反监视 DLL</button>
+      <button id="btnReadPwd">读取解锁密码 (Knock1)</button>
+    </div>
+    <div class="muted" id="dirInfo">极域目录：未检测</div>
+    <div class="muted" id="pwdInfo"></div>
+  </div>
+
+  <div class="card">
+    <h2>驱动卸载</h2>
+    <div class="row">
+      <button id="btnFileFilter">卸载 TDFileFilter（USB）</button>
+      <button id="btnNetFilter">卸载 TDNetFilter（网络）</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>UDP 攻击（DMOC 协议）</h2>
+    <div class="row">
+      <label>目标 IP</label>
+      <input id="ip" value="192.168.1.100" />
+      <label>端口</label>
+      <input id="port" value="4705" style="max-width:80px" />
+    </div>
+    <div class="row">
+      <button id="btnMsg">发消息</button>
+      <button id="btnShutdown">关机</button>
+      <button id="btnReboot">重启</button>
+      <button id="btnExec">执行命令</button>
+    </div>
+    <div class="row">
+      <label>消息/命令</label>
+      <input id="payload" value="你好，这是一条测试消息" />
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>日志</h2>
+    <div id="log"></div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
