@@ -132,16 +132,16 @@ Napi::Value FindStudentMainDir(const Napi::CallbackInfo& info) {
 } // namespace
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
-    exports.Set("unlockDCS", Napi::Function::New(env, UnlockDCS));
-    exports.Set("injectToStudentMain", Napi::Function::New(env, InjectToStudentMain));
-    exports.Set("sendShutdown", Napi::Function::New(env, SendShutdown));
-    exports.Set("sendReboot", Napi::Function::New(env, SendReboot));
-    exports.Set("sendMessage", Napi::Function::New(env, SendMessage));
-    exports.Set("sendExecCommand", Napi::Function::New(env, SendExecCommand));
-    exports.Set("readKnock1Password", Napi::Function::New(env, ReadKnock1Password));
-    exports.Set("unloadFileFilter", Napi::Function::New(env, UnloadFileFilter));
-    exports.Set("unloadNetFilter", Napi::Function::New(env, UnloadNetFilter));
-    exports.Set("findStudentMainDir", Napi::Function::New(env, FindStudentMainDir));
+    exports.Set("unlockDCS", Napi::Function::New(env, UnlockDCS, "unlockDCS"));
+    exports.Set("injectToStudentMain", Napi::Function::New(env, InjectToStudentMain, "injectToStudentMain"));
+    exports.Set("sendShutdown", Napi::Function::New(env, SendShutdown, "sendShutdown"));
+    exports.Set("sendReboot", Napi::Function::New(env, SendReboot, "sendReboot"));
+    exports.Set("sendMessage", Napi::Function::New(env, SendMessage, "sendMessage"));
+    exports.Set("sendExecCommand", Napi::Function::New(env, SendExecCommand, "sendExecCommand"));
+    exports.Set("readKnock1Password", Napi::Function::New(env, ReadKnock1Password, "readKnock1Password"));
+    exports.Set("unloadFileFilter", Napi::Function::New(env, UnloadFileFilter, "unloadFileFilter"));
+    exports.Set("unloadNetFilter", Napi::Function::New(env, UnloadNetFilter, "unloadNetFilter"));
+    exports.Set("findStudentMainDir", Napi::Function::New(env, FindStudentMainDir, "findStudentMainDir"));
     return exports;
 }
 
