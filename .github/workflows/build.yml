@@ -38,15 +38,13 @@ jobs:
           )
           call "%VCVARS%" x86
           if not exist build mkdir build
-          cl /nologo /LD /MT /O2 /EHsc /utf-8 /DUNICODE /D_UNICODE ^
-             inject_dll\dllmain.cpp ^
-             native\monitor.cpp ^
-             native\unlock.cpp ^
-             native\jiyu_common.cpp ^
-             /I native ^
-             /link /OUT:build\jiyu_inject.dll ^
-             advapi32.lib user32.lib
+          cl /nologo /LD /MT /O2 /EHsc /utf-8 /DUNICODE /D_UNICODE /I native inject_dll\dllmain.cpp native\monitor.cpp native\unlock.cpp native\jiyu_common.cpp /link /OUT:build\jiyu_inject.dll advapi32.lib user32.lib
           if errorlevel 1 exit /b 1
+          if not exist build\jiyu_inject.dll (
+            echo [ERROR] jiyu_inject.dll not generated, build dir content:
+            dir build
+            exit /b 1
+          )
 
       # ------------------------------------------------------------------
       # 2) 编译 native addon (jiyu_native.node)，针对 Electron ABI
