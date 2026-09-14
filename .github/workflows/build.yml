@@ -24,7 +24,24 @@ jobs:
         run: npm install --ignore-scripts
 
       # ------------------------------------------------------------------
-      # 1) 编译 32 位注入 DLL (jiyu_inject.dll)
+      # 1) 编译 native addon (jiyu_native.node)，针对 Electron ABI
+      #    关键：先用 vcvarsall x64 设置 VCINSTALLDIR，node-gyp 检测到
+      #    VCINSTALLDIR 后会跳过 VS 查找（否则旧版 node-gyp 不识别 VS 18）。
+      #    注意：node-gyp rebuild 会清空 build 目录，因此必须最先编译。
+      # ------------------------------------------------------------------
+      - name: Build native addon (Electron ABI)
+        shell: cmd
+        run: |
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -find VC\Auxiliary\Build\vcvarsall.bat`) do set "VCVARS=%%i"
+          call "%VCVARS%" x64
+          node -p "require('electron/package.json').version" > "%TEMP%\electron_ver.txt"
+          set /p ELECTRON_VERSION=<"%TEMP%\electron_ver.txt"
+          echo Electron version: %ELECTRON_VERSION%
+          npx node-gyp rebuild --target=%ELECTRON_VERSION% --arch=x64 --dist-url=https://electronjs.org/headers
+          if errorlevel 1 exit /b 1
+
+      # ------------------------------------------------------------------
+      # 2) 编译 32 位注入 DLL (jiyu_inject.dll)
       #    注入目标 StudentMain.exe 是 x86，因此注入 DLL 必须 32 位。
       #    用 vswhere 定位 vcvarsall.bat，再切到 x86 工具链编译。
       # ------------------------------------------------------------------
@@ -38,29 +55,9 @@ jobs:
           )
           call "%VCVARS%" x86
           if not exist build mkdir build
-          cl /nologo /LD /MT /O2 /EHsc /utf-8 /DUNICODE /D_UNICODE /I native inject_dll\dllmain.cpp native\monitor.cpp native\unlock.cpp native\jiyu_common.cpp /link /OUT:build\jiyu_inject.dll advapi32.lib user32.lib
+          cl /nologo /LD /MT /O2 /EHsc /utf-8 /DUNICODE /D_UNICODE /I native /Febuild\jiyu_inject.dll inject_dll\dllmain.cpp native\monitor.cpp native\unlock.cpp native\jiyu_common.cpp /link advapi32.lib user32.lib
           if errorlevel 1 exit /b 1
-          if not exist build\jiyu_inject.dll (
-            echo [ERROR] jiyu_inject.dll not generated, build dir content:
-            dir build
-            exit /b 1
-          )
-
-      # ------------------------------------------------------------------
-      # 2) 编译 native addon (jiyu_native.node)，针对 Electron ABI
-      #    关键：先用 vcvarsall x64 设置 VCINSTALLDIR，node-gyp 检测到
-      #    VCINSTALLDIR 后会跳过 VS 查找（否则旧版 node-gyp 不识别 VS 18）。
-      # ------------------------------------------------------------------
-      - name: Build native addon (Electron ABI)
-        shell: cmd
-        run: |
-          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -find VC\Auxiliary\Build\vcvarsall.bat`) do set "VCVARS=%%i"
-          call "%VCVARS%" x64
-          node -p "require('electron/package.json').version" > "%TEMP%\electron_ver.txt"
-          set /p ELECTRON_VERSION=<"%TEMP%\electron_ver.txt"
-          echo Electron version: %ELECTRON_VERSION%
-          npx node-gyp rebuild --target=%ELECTRON_VERSION% --arch=x64 --dist-url=https://electronjs.org/headers
-          if errorlevel 1 exit /b 1
+          dir build
 
       - name: Verify artifacts
         shell: pwsh
