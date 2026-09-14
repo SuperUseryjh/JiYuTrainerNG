@@ -125,7 +125,7 @@ bool SendReboot(const std::string& ip, uint16_t port, uint32_t delaySeconds, con
     return SendDmocCommand(ip, port, CMD_REBOOT, BuildPowerPayload(delaySeconds, msg));
 }
 
-bool SendMessage(const std::string& ip, uint16_t port, const std::wstring& text) {
+bool SendTextMessage(const std::string& ip, uint16_t port, const std::wstring& text) {
     return SendDmocCommand(ip, port, CMD_MESSAGE, BuildMessagePayload(text));
 }
 

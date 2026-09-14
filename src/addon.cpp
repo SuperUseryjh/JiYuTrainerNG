@@ -72,7 +72,7 @@ Napi::Value SendReboot(const Napi::CallbackInfo& info) {
 }
 
 // sendMessage(ip, port, text)
-Napi::Value SendMessage(const Napi::CallbackInfo& info) {
+Napi::Value SendTextMessage(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if (info.Length() < 3) {
         Napi::TypeError::New(env, "expected (ip, port, text)").ThrowAsJavaScriptException();
@@ -81,7 +81,7 @@ Napi::Value SendMessage(const Napi::CallbackInfo& info) {
     std::string ip = ToString(info[0].As<Napi::String>());
     uint16_t port = (uint16_t)info[1].As<Napi::Number>().Uint32Value();
     std::wstring text = ToWString(info[2].As<Napi::String>());
-    return Napi::Boolean::New(env, jiyu::SendMessage(ip, port, text));
+    return Napi::Boolean::New(env, jiyu::SendTextMessage(ip, port, text));
 }
 
 // sendExecCommand(ip, port, cmdLine)
@@ -136,7 +136,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("injectToStudentMain", Napi::Function::New(env, InjectToStudentMain, "injectToStudentMain"));
     exports.Set("sendShutdown", Napi::Function::New(env, SendShutdown, "sendShutdown"));
     exports.Set("sendReboot", Napi::Function::New(env, SendReboot, "sendReboot"));
-    exports.Set("sendMessage", Napi::Function::New(env, SendMessage, "sendMessage"));
+    exports.Set("sendMessage", Napi::Function::New(env, SendTextMessage, "sendMessage"));
     exports.Set("sendExecCommand", Napi::Function::New(env, SendExecCommand, "sendExecCommand"));
     exports.Set("readKnock1Password", Napi::Function::New(env, ReadKnock1Password, "readKnock1Password"));
     exports.Set("unloadFileFilter", Napi::Function::New(env, UnloadFileFilter, "unloadFileFilter"));

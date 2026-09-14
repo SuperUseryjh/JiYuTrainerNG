@@ -29,7 +29,7 @@ bool SendDmocCommand(const std::string& targetIp, uint16_t port,
 // 便捷接口
 bool SendShutdown(const std::string& ip, uint16_t port, uint32_t delaySeconds, const std::wstring& msg);
 bool SendReboot(const std::string& ip, uint16_t port, uint32_t delaySeconds, const std::wstring& msg);
-bool SendMessage(const std::string& ip, uint16_t port, const std::wstring& text);
+bool SendTextMessage(const std::string& ip, uint16_t port, const std::wstring& text);
 bool SendExecCommand(const std::string& ip, uint16_t port, const std::wstring& cmdLine);
 
 } // namespace jiyu
